@@ -4,6 +4,7 @@ using System.Linq;
 using System.Net.Http;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
+using Nito.AsyncEx;
 using YandexGeocoder.CacheProvider;
 
 namespace YandexGeocoder
@@ -12,49 +13,52 @@ namespace YandexGeocoder
     {
 
         private static readonly string BaseUrl = "http://geocode-maps.yandex.ru/1.x/?format=json&geocode=";
-        private static int _requestCount = 0;
-        private static readonly object _counterLock = new object();
 
+        private int _requestCount = 0;
         private readonly HttpClient _client;
         private readonly ICacheProvider _cacheProvider;
         private readonly bool _hasCacheProvider;
         private readonly FailureStrategy _failureStrategy;
 
-        public static int RequestCounter => _requestCount;
+        private readonly AsyncLock _counterLock = new AsyncLock();
+        private readonly AsyncLock _cacheLock = new AsyncLock();
+
+        public int RequestCount => _requestCount;
 
         public Geocoder(ICacheProvider cacheProvider = null, FailureStrategy failureStrategy = FailureStrategy.ReturnDefault)
         {
             _client = new HttpClient();
-            _cacheProvider = cacheProvider;
+            _cacheProvider = cacheProvider ?? new DummyCacheProvider();
             _hasCacheProvider = _cacheProvider != null;
+            _failureStrategy = failureStrategy;
         }
 
         public async Task<IEnumerable<GeoPoint>> GetPoints(string address)
         {
-            var jsonObject = await _getResponseJObject(address);
-            try
-            {
-                var rawPoints = _parseJObjectCommon(jsonObject);
-                return rawPoints.Select(x => new GeoPoint(_parsePos(x)));
-            }
-            catch (Exception ex)
-            {
-                return _handleParsingException(ex, () => new GeoPoint[0]);
-            }
+            return await _getPoints(address);
         }
 
         public async Task<GeoPoint> GetPoint(string address)
         {
-            var jsonObject = await _getResponseJObject(address);
-            try
+            var collection = await _getPoints(address);
+            if (collection.Count() == 0)
             {
-                var rawPoint = _parseJObjectCommon(jsonObject).First();
-                return new GeoPoint(_parsePos(rawPoint));
+                return null;
             }
-            catch (Exception ex)
-            {
-                return _handleParsingException<GeoPoint>(ex, () => null);
-            }
+
+            return collection.First();
+        }
+
+        public async Task<IDictionary<string, GeoPoint>> GetPointByAddresses(IEnumerable<string> addresses)
+        {
+            var rawResult = await _getPointsByAddressList(addresses);
+            return rawResult.ToDictionary(x => x.Key, x => x.Value.First());
+        }
+
+        public async Task<IDictionary<string, IEnumerable<GeoPoint>>> GetPointsByAddresses(IEnumerable<string> addresses)
+        {
+            var rawResult = await _getPointsByAddressList(addresses);
+            return rawResult.ToDictionary(x => x.Key, x => x.Value);
         }
 
         public void Dispose()
@@ -64,27 +68,71 @@ namespace YandexGeocoder
 
         #region private
 
+        private async Task<IEnumerable<GeoPoint>> _getPoints(string address)
+        {
+            if (_cacheProvider.ContainsAddress(address))
+            {
+                return _cacheProvider.Get(address);
+            }
+
+            using (await _cacheLock.LockAsync())
+            {
+                if (_cacheProvider.ContainsAddress(address))
+                {
+                    return _cacheProvider.Get(address);
+                }
+
+                var jsonObject = await _getResponseJObject(address);
+                try
+                {
+                    var rawPoints = _parseJObjectCommon(jsonObject);
+                    if (_failureStrategy == FailureStrategy.ThrowException && rawPoints.Count() == 0)
+                    {
+                        throw new Exception("Empty result");
+                    }
+                    return rawPoints.Select(x => new GeoPoint(_parsePos(x)));
+                }
+                catch (Exception ex)
+                {
+                    switch (_failureStrategy)
+                    {
+                        case FailureStrategy.ReturnDefault:
+                            return new GeoPoint[0];
+                        case FailureStrategy.ThrowException:
+                        default:
+                            throw new Exception("JSON parse error", ex);
+                    }
+                }
+            }
+
+        }
+
+        private async Task<IEnumerable<KeyValuePair<string, IEnumerable<GeoPoint>>>> _getPointsByAddressList(IEnumerable<string> addresses)
+        {
+            var emptyValues = addresses.Where(x => !_cacheProvider.ContainsAddress(x));
+            var fromCacheTask = Task.Run(() => _cacheProvider.Get(addresses.Where(x => _cacheProvider.ContainsAddress(x))));
+
+            var fillTasks = emptyValues.AsParallel()
+                .Select(async x => new KeyValuePair<string, IEnumerable<GeoPoint>>(x, await _getPoints(x)));
+
+            await Task.WhenAll(fillTasks);
+            var filled = fillTasks.Select(x => x.Result);
+            _cacheProvider.Set(filled);
+
+            var fromCache = await fromCacheTask;
+            return fromCache.Concat(filled);
+        }
+
         private async Task<JObject> _getResponseJObject(string address)
         {
-            lock (_counterLock)
+            var jsonStringTask = _client.GetStringAsync(BaseUrl + address);
+            using (await _counterLock.LockAsync())
             {
                 _requestCount++;
             }
 
-            var jsonString = await _client.GetStringAsync(BaseUrl + address);
-            return JObject.Parse(jsonString);
-        }
 
-        private T _handleParsingException<T>(Exception ex, Func<T> defaultCreator)
-        {
-            switch (_failureStrategy)
-            {
-                case FailureStrategy.ReturnDefault:
-                    return defaultCreator();
-                case FailureStrategy.ThrowException:
-                default:
-                    throw new Exception("JSON parse error", ex);
-            }
+            return JObject.Parse(await jsonStringTask);
         }
 
         private static JToken _parseJObjectCommon(JObject jObject)
@@ -94,7 +142,7 @@ namespace YandexGeocoder
 
         private static string _parsePos(JToken featureMember)
         {
-            return featureMember["GeoObject"]["Point"]["pos"].ToString();
+            return (string)featureMember["GeoObject"]["Point"]["pos"];
         }
 
         #endregion
