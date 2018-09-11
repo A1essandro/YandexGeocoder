@@ -48,7 +48,7 @@ namespace YandexGeocoder.Test
             var geocoderDefault = new Geocoder(null, FailureStrategy.ReturnDefault);
             var geocoderException = new Geocoder(null, FailureStrategy.ThrowException);
 
-            Assert.Equal(null, await geocoderDefault.GetPoint(fakeAddress));
+            Assert.True(await geocoderDefault.GetPoint(fakeAddress) == null);
             Assert.Equal(new GeoPoint[0], await geocoderDefault.GetPoints(fakeAddress));
             await Assert.ThrowsAnyAsync<Exception>(async () => await geocoderException.GetPoint(fakeAddress));
             await Assert.ThrowsAnyAsync<Exception>(async () => await geocoderException.GetPoints(fakeAddress));
