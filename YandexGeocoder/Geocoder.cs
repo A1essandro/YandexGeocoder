@@ -2,9 +2,9 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
-using Nito.AsyncEx;
 using YandexGeocoder.CacheProvider;
 
 namespace YandexGeocoder
@@ -20,8 +20,8 @@ namespace YandexGeocoder
         private readonly bool _hasCacheProvider;
         private readonly FailureStrategy _failureStrategy;
 
-        private readonly AsyncLock _counterLock = new AsyncLock();
-        private readonly AsyncLock _cacheLock = new AsyncLock();
+        private readonly object _counterLock = new object();
+        private readonly SemaphoreSlim _cacheLock = new SemaphoreSlim(1, 1);
 
         public int RequestCount => _requestCount;
 
@@ -75,7 +75,8 @@ namespace YandexGeocoder
                 return _cacheProvider.Get(address);
             }
 
-            using (await _cacheLock.LockAsync())
+            await _cacheLock.WaitAsync();
+            try
             {
                 if (_cacheProvider.ContainsAddress(address))
                 {
@@ -104,7 +105,10 @@ namespace YandexGeocoder
                     }
                 }
             }
-
+            finally
+            {
+                _cacheLock.Release();
+            }
         }
 
         private async Task<IEnumerable<KeyValuePair<string, IEnumerable<GeoPoint>>>> _getPointsByAddressList(IEnumerable<string> addresses)
@@ -126,7 +130,7 @@ namespace YandexGeocoder
         private async Task<JObject> _getResponseJObject(string address)
         {
             var jsonStringTask = _client.GetStringAsync(BaseUrl + address);
-            using (await _counterLock.LockAsync())
+            lock (_counterLock)
             {
                 _requestCount++;
             }
