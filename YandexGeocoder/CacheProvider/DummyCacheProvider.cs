@@ -1,7 +1,7 @@
 using System;
 using System.Collections.Generic;
 
-namespace YandexGeocoder.CacheProvider
+namespace IRTech.YandexGeocoder.CacheProvider
 {
     internal class DummyCacheProvider : ICacheProvider
     {

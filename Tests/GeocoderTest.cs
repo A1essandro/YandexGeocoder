@@ -1,9 +1,10 @@
 using System;
 using System.Linq;
 using System.Threading.Tasks;
+using IRTech.YandexGeocoder;
 using Xunit;
 
-namespace YandexGeocoder
+namespace YandexGeocoder.Test
 {
     public class GeocoderTest
     {

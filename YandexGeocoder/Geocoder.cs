@@ -5,9 +5,9 @@ using System.Net.Http;
 using System.Threading;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
-using YandexGeocoder.CacheProvider;
+using IRTech.YandexGeocoder.CacheProvider;
 
-namespace YandexGeocoder
+namespace IRTech.YandexGeocoder
 {
     public class Geocoder : IDisposable
     {

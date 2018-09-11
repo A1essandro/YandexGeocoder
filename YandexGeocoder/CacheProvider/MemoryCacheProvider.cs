@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Runtime.CompilerServices;
 
-namespace YandexGeocoder.CacheProvider
+namespace IRTech.YandexGeocoder.CacheProvider
 {
     public class MemoryCacheProvider : ICacheProvider
     {

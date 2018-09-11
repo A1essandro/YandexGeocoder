@@ -1,6 +1,6 @@
 using System.Globalization;
 
-namespace YandexGeocoder
+namespace IRTech.YandexGeocoder
 {
     public class GeoPoint
     {

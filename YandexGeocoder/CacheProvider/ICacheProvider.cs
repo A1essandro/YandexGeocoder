@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-namespace YandexGeocoder.CacheProvider
+namespace IRTech.YandexGeocoder.CacheProvider
 {
     public interface ICacheProvider
     {

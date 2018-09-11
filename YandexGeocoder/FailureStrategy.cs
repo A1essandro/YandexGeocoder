@@ -1,4 +1,4 @@
-namespace YandexGeocoder
+namespace IRTech.YandexGeocoder
 {
     public enum FailureStrategy
     {
