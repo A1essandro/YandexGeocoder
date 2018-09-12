@@ -25,6 +25,8 @@ namespace IRTech.YandexGeocoder
 
         public int RequestCount => _requestCount;
 
+        public ICacheProvider СacheProvider => _cacheProvider;
+
         public Geocoder(ICacheProvider cacheProvider = null, FailureStrategy failureStrategy = FailureStrategy.ReturnDefault)
         {
             _client = new HttpClient();
@@ -51,13 +53,13 @@ namespace IRTech.YandexGeocoder
 
         public async Task<IDictionary<string, GeoPoint>> GetPointByAddresses(IEnumerable<string> addresses)
         {
-            var rawResult = await _getPointsByAddressList(addresses);
+            var rawResult = await _getPointsByAddressList(addresses.Distinct()).ConfigureAwait(false);
             return rawResult.ToDictionary(x => x.Key, x => x.Value.First());
         }
 
         public async Task<IDictionary<string, IEnumerable<GeoPoint>>> GetPointsByAddresses(IEnumerable<string> addresses)
         {
-            var rawResult = await _getPointsByAddressList(addresses);
+            var rawResult = await _getPointsByAddressList(addresses.Distinct()).ConfigureAwait(false);
             return rawResult.ToDictionary(x => x.Key, x => x.Value);
         }
 
@@ -117,9 +119,9 @@ namespace IRTech.YandexGeocoder
             var fromCacheTask = Task.Run(() => _cacheProvider.Get(addresses.Where(x => _cacheProvider.ContainsAddress(x))));
 
             var fillTasks = emptyValues.AsParallel()
-                .Select(async x => new KeyValuePair<string, IEnumerable<GeoPoint>>(x, await _getPoints(x)));
+                .Select(async x => new KeyValuePair<string, IEnumerable<GeoPoint>>(x, await _getPoints(x).ConfigureAwait(false)));
 
-            await Task.WhenAll(fillTasks);
+            await Task.WhenAll(fillTasks).ConfigureAwait(false);
             var filled = fillTasks.Select(x => x.Result);
             _cacheProvider.Set(filled);
 
