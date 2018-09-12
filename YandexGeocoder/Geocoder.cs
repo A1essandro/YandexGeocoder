@@ -37,12 +37,12 @@ namespace IRTech.YandexGeocoder
 
         public async Task<IEnumerable<GeoPoint>> GetPoints(string address)
         {
-            return await _getPoints(address);
+            return await _getPoints(address).ConfigureAwait(false);
         }
 
         public async Task<GeoPoint> GetPoint(string address)
         {
-            var collection = await _getPoints(address);
+            var collection = await _getPoints(address).ConfigureAwait(false);
             if (collection.Count() == 0)
             {
                 return null;
@@ -77,7 +77,7 @@ namespace IRTech.YandexGeocoder
                 return _cacheProvider.Get(address);
             }
 
-            await _cacheLock.WaitAsync();
+            await _cacheLock.WaitAsync().ConfigureAwait(false);
             try
             {
                 if (_cacheProvider.ContainsAddress(address))
@@ -85,7 +85,7 @@ namespace IRTech.YandexGeocoder
                     return _cacheProvider.Get(address);
                 }
 
-                var jsonObject = await _getResponseJObject(address);
+                var jsonObject = await _getResponseJObject(address).ConfigureAwait(false);
                 try
                 {
                     var rawPoints = _parseJObjectCommon(jsonObject);
@@ -125,7 +125,7 @@ namespace IRTech.YandexGeocoder
             var filled = fillTasks.Select(x => x.Result);
             _cacheProvider.Set(filled);
 
-            var fromCache = await fromCacheTask;
+            var fromCache = await fromCacheTask.ConfigureAwait(false);
             return fromCache.Concat(filled);
         }
 
@@ -137,8 +137,7 @@ namespace IRTech.YandexGeocoder
                 _requestCount++;
             }
 
-
-            return JObject.Parse(await jsonStringTask);
+            return JObject.Parse(await jsonStringTask.ConfigureAwait(false));
         }
 
         private static JToken _parseJObjectCommon(JObject jObject)
