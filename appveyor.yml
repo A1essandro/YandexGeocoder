@@ -6,7 +6,7 @@ dotnet_csproj:
   version: "{version}"
   package_version: "{version}"
 before_build:
-  - choco install "msbuild-sonarqube-runner" -y
+  # - choco install "msbuild-sonarqube-runner" -y
   - dotnet restore
   #- MSBuild.SonarQube.Runner.exe begin /k:"neural-network-constructor" /d:"sonar.host.url=https://sonarqube.com" /d:"sonar.organization=a1essandro-github" /d:"sonar.login=c2e717505450940ed52170d6a57adb92c475af69"
 build:

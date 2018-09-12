@@ -1,3 +1,5 @@
+[![Build status](https://ci.appveyor.com/api/projects/status/hkx2qtcbu686qc8g/branch/master?svg=true)](https://ci.appveyor.com/project/A1essandro/yandexgeocoder/branch/master) [![Build Status](https://travis-ci.org/A1essandro/YandexGeocoder.svg?branch=master)](https://travis-ci.org/A1essandro/YandexGeocoder) ![NuGet](https://img.shields.io/nuget/v/IRTech.YandexGeocoder.svg) ![NuGet Pre Release](https://img.shields.io/nuget/vpre/IRTech.YandexGeocoder.svg)
+
 # IRTech.YandexGeocoder
 
 > Внимание! Прежде чем использовать данную библиотеку, прочтите, пожалуйста, [условия использования Яндекс.Геокодера](https://tech.yandex.ru/maps/geocoder/#terms). Не используйте кэширование на срок более 30 дней.
@@ -21,7 +23,7 @@ IEnumerable<GeoPoint> samara = await geocoder.GetPoints("Брест");
 IEnumerable<string> addresses;
 //...............................................
 IDictionary<string, GeoPoint> pointToAddress = await geocoder.GetPointByAddresses(addresses);
-IDictionary<string, IEnumerable<GeoPoint>> pointsToAddress await geocoder.GetPointsByAddresses(addresses);
+IDictionary<string, IEnumerable<GeoPoint>> pointsToAddress = await geocoder.GetPointsByAddresses(addresses);
 ```
 ## Кэширование
 В конструктор `Geocoder` можно передать реализацию интерфейса `IRTech.YandexGeocoder.CacheProvider.ICacheProvider` в качестве первого параметра. Реализация `Geocoder` гарантирует, что не будет вызван одновременно метод вставки и получения данных в провайдер.
