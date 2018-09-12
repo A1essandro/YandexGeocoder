@@ -1,6 +1,6 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
-    <TargetFrameworks Condition="'$(OS)' == 'Windows_NT'">net461</TargetFrameworks>
+    <TargetFrameworks Condition="'$(OS)' == 'Windows_NT'">net461;netstandard2.0</TargetFrameworks>
     <TargetFrameworks Condition="'$(OS)' != 'Windows_NT'">netstandard2.0</TargetFrameworks>
     <PackageId>IRTech.YandexGeocoder</PackageId>
     <Version>$(Version)</Version>
@@ -15,7 +15,7 @@
     <RootNamespace>IRTech.YandexGeocoder</RootNamespace>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.Net.Http" Version="2.2.29"/>
+    <PackageReference Include="System.Net.Http" Version="4.3.3" />
     <PackageReference Include="Newtonsoft.Json" Version="9.0.1"/>
     <PackageReference Include="Microsoft.Build.Utilities.Core" Version="15.8.166"/>
   </ItemGroup>
