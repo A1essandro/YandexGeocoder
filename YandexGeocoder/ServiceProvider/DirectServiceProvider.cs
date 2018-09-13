@@ -15,20 +15,21 @@ namespace YandexGeocoder.ServiceProvider
 
         private static readonly string BaseUrl = "http://geocode-maps.yandex.ru/1.x/?format=json&geocode=";
 
-        private readonly HttpClient _client;
+        private readonly HttpClient _client = new HttpClient();
         private readonly FailureStrategy _failureStrategy;
         private readonly ICacheProvider _cacheProvider;
         private readonly object _counterLock = new object();
         private readonly SemaphoreSlim _cacheLock = new SemaphoreSlim(1, 1);
+        private readonly CancellationTokenSource _clearCacheCancellationTokenSource = new CancellationTokenSource();
         private int _requestCount = 0;
 
         public int RequestCount => _requestCount;
 
         internal DirectServiceProvider(ICacheProvider cacheProvider, FailureStrategy failureStrategy)
         {
-            _client = new HttpClient();
             _failureStrategy = failureStrategy;
             _cacheProvider = cacheProvider;
+            _clearCacheTask(_clearCacheCancellationTokenSource.Token);
         }
 
         public async Task<IEnumerable<GeoPoint>> GetPoints(string address)
@@ -111,8 +112,28 @@ namespace YandexGeocoder.ServiceProvider
             return (string)featureMember["GeoObject"]["Point"]["pos"];
         }
 
+        private void _clearCacheTask(CancellationToken cToken)
+        {
+            Task.Run(async () =>
+            {
+                while (true)
+                {
+                    await Task.Delay(TimeSpan.FromDays(30), cToken);
+                    await _cacheLock.WaitAsync(cToken).ConfigureAwait(false);
+                    try
+                    {
+                        _cacheProvider.Clear();
+                    }
+                    finally
+                    {
+                        _cacheLock.Release();
+                    }
+                }
+            }, cToken);
+        }
+
         #region IDisposable Support
-        
+
         private bool disposedValue = false;
 
         protected virtual void Dispose(bool disposing)
@@ -121,6 +142,7 @@ namespace YandexGeocoder.ServiceProvider
             {
                 if (disposing)
                 {
+                    _clearCacheCancellationTokenSource.Cancel();
                     _client.Dispose();
                 }
                 disposedValue = true;
@@ -131,7 +153,7 @@ namespace YandexGeocoder.ServiceProvider
         {
             Dispose(true);
         }
-        
+
         #endregion
 
     }

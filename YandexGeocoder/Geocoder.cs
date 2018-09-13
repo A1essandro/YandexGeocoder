@@ -52,7 +52,7 @@ namespace IRTech.YandexGeocoder
         }
 
         #region IDisposable Support
-        
+
         private bool disposedValue = false;
 
         protected virtual void Dispose(bool disposing)
@@ -71,7 +71,7 @@ namespace IRTech.YandexGeocoder
         {
             Dispose(true);
         }
-        
+
         #endregion
 
     }
