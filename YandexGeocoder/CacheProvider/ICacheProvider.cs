@@ -13,5 +13,7 @@ namespace IRTech.YandexGeocoder.CacheProvider
 
         IEnumerable<KeyValuePair<string, IEnumerable<GeoPoint>>> Get(IEnumerable<string> enumerable);
 
+        void Clear();
+
     }
 }

@@ -19,5 +19,10 @@ namespace IRTech.YandexGeocoder.CacheProvider
             //empty
         }
 
+        public void Clear()
+        {
+            //empty
+        }
+
     }
 }
