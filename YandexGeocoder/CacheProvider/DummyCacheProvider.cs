@@ -19,14 +19,5 @@ namespace IRTech.YandexGeocoder.CacheProvider
             //empty
         }
 
-        public void Set(KeyValuePair<string, IEnumerable<GeoPoint>> data)
-        {
-            //empty
-        }
-
-        public void Set(string address, IEnumerable<GeoPoint> point)
-        {
-            //empty
-        }
     }
 }

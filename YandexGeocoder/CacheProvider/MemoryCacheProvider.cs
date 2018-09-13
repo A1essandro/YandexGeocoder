@@ -37,17 +37,5 @@ namespace IRTech.YandexGeocoder.CacheProvider
             }
         }
 
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Set(KeyValuePair<string, IEnumerable<GeoPoint>> data)
-        {
-            _cache.Add(data);
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public void Set(string address, IEnumerable<GeoPoint> point)
-        {
-            _cache.Add(address, point);
-        }
-
     }
 }
