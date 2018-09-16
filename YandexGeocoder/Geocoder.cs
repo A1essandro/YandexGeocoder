@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Threading;
 using System.Threading.Tasks;
 using IRTech.YandexGeocoder.CacheProvider;
 using YandexGeocoder.ServiceProvider;
@@ -23,14 +24,14 @@ namespace IRTech.YandexGeocoder
             _directService = new DirectServiceProvider(_cacheProvider, failureStrategy);
         }
 
-        public async Task<IEnumerable<GeoPoint>> GetPoints(string address)
+        public async Task<IEnumerable<GeoPoint>> GetPoints(string address, CancellationToken cToken = default(CancellationToken))
         {
-            return await _directService.GetPoints(address).ConfigureAwait(false);
+            return await _directService.GetPoints(address, cToken).ConfigureAwait(false);
         }
 
-        public async Task<GeoPoint> GetPoint(string address)
+        public async Task<GeoPoint> GetPoint(string address, CancellationToken cToken = default(CancellationToken))
         {
-            var collection = await GetPoints(address).ConfigureAwait(false);
+            var collection = await GetPoints(address, cToken).ConfigureAwait(false);
             if (collection.Count() == 0)
             {
                 return null;
@@ -39,15 +40,15 @@ namespace IRTech.YandexGeocoder
             return collection.First();
         }
 
-        public async Task<IDictionary<string, GeoPoint>> GetPointByAddresses(IEnumerable<string> addresses)
+        public async Task<IDictionary<string, GeoPoint>> GetPointByAddresses(IEnumerable<string> addresses, CancellationToken cToken = default(CancellationToken))
         {
-            var rawResult = await _directService.GetPointsByAddressList(addresses.Distinct()).ConfigureAwait(false);
+            var rawResult = await _directService.GetPointsByAddressList(addresses.Distinct(), cToken).ConfigureAwait(false);
             return rawResult.ToDictionary(x => x.Key, x => x.Value.First());
         }
 
-        public async Task<IDictionary<string, IEnumerable<GeoPoint>>> GetPointsByAddresses(IEnumerable<string> addresses)
+        public async Task<IDictionary<string, IEnumerable<GeoPoint>>> GetPointsByAddresses(IEnumerable<string> addresses, CancellationToken cToken = default(CancellationToken))
         {
-            var rawResult = await _directService.GetPointsByAddressList(addresses.Distinct()).ConfigureAwait(false);
+            var rawResult = await _directService.GetPointsByAddressList(addresses.Distinct(), cToken).ConfigureAwait(false);
             return rawResult.ToDictionary(x => x.Key, x => x.Value);
         }
 

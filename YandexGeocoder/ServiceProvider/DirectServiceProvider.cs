@@ -32,14 +32,15 @@ namespace YandexGeocoder.ServiceProvider
             _clearCacheTask(_clearCacheCancellationTokenSource.Token);
         }
 
-        public async Task<IEnumerable<GeoPoint>> GetPoints(string address)
+        public async Task<IEnumerable<GeoPoint>> GetPoints(string address, CancellationToken cToken)
         {
             if (_cacheProvider.ContainsAddress(address))
             {
                 return _cacheProvider.Get(address);
             }
 
-            await _cacheLock.WaitAsync().ConfigureAwait(false);
+            cToken.ThrowIfCancellationRequested();
+            await _cacheLock.WaitAsync(cToken).ConfigureAwait(false);
             try
             {
                 if (_cacheProvider.ContainsAddress(address))
@@ -47,6 +48,7 @@ namespace YandexGeocoder.ServiceProvider
                     return _cacheProvider.Get(address);
                 }
 
+                cToken.ThrowIfCancellationRequested();
                 var jsonObject = await _getResponseJObject(address).ConfigureAwait(false);
                 try
                 {
@@ -75,15 +77,17 @@ namespace YandexGeocoder.ServiceProvider
             }
         }
 
-        public async Task<IEnumerable<KeyValuePair<string, IEnumerable<GeoPoint>>>> GetPointsByAddressList(IEnumerable<string> addresses)
+        public async Task<IEnumerable<KeyValuePair<string, IEnumerable<GeoPoint>>>> GetPointsByAddressList(IEnumerable<string> addresses, CancellationToken cToken)
         {
             var emptyValues = addresses.Where(x => !_cacheProvider.ContainsAddress(x));
             var fromCacheTask = Task.Run(() => _cacheProvider.Get(addresses.Where(x => _cacheProvider.ContainsAddress(x))));
 
             var fillTasks = emptyValues
-                .Select(async x => new KeyValuePair<string, IEnumerable<GeoPoint>>(x, await GetPoints(x).ConfigureAwait(false)));
+                .Select(async x => new KeyValuePair<string, IEnumerable<GeoPoint>>(x, await GetPoints(x, cToken).ConfigureAwait(false)));
 
             await Task.WhenAll(fillTasks).ConfigureAwait(false);
+
+            cToken.ThrowIfCancellationRequested();
             var filled = fillTasks.Select(x => x.Result);
             _cacheProvider.Set(filled);
 
