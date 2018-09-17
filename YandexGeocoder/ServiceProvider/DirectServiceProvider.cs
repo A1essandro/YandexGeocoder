@@ -57,7 +57,12 @@ namespace YandexGeocoder.ServiceProvider
                     {
                         throw new Exception("Empty result");
                     }
-                    return rawPoints.Select(x => new GeoPoint(_parsePos(x)));
+
+                    var result = rawPoints.Select(x => new GeoPoint(_parsePos(x)));
+                    var toCache = new KeyValuePair<string, IEnumerable<GeoPoint>>(address, result);
+                    _cacheProvider.Set(new[] { toCache });
+
+                    return result;
                 }
                 catch (Exception ex)
                 {

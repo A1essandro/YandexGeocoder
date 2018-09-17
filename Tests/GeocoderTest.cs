@@ -2,6 +2,7 @@ using System;
 using System.Linq;
 using System.Threading.Tasks;
 using IRTech.YandexGeocoder;
+using IRTech.YandexGeocoder.CacheProvider;
 using Xunit;
 
 namespace YandexGeocoder.Test
@@ -38,6 +39,15 @@ namespace YandexGeocoder.Test
             await geocoder.GetPoints("Брест");
             Assert.Equal(1, geocoder.RequestCount);
             await geocoder.GetPoints("Брест");
+            Assert.Equal(2, geocoder.RequestCount);
+
+            geocoder = new Geocoder(new MemoryCacheProvider());
+            Assert.Equal(0, geocoder.RequestCount);
+            await geocoder.GetPoints("Якутск");
+            Assert.Equal(1, geocoder.RequestCount);
+            await geocoder.GetPoints("Якутск");
+            Assert.Equal(1, geocoder.RequestCount);
+            await geocoder.GetPoints("Якутск, улица Хабарова, д 5");
             Assert.Equal(2, geocoder.RequestCount);
         }
 
