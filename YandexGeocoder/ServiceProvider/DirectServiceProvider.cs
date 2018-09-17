@@ -29,7 +29,8 @@ namespace YandexGeocoder.ServiceProvider
         {
             _failureStrategy = failureStrategy;
             _cacheProvider = cacheProvider;
-            _clearCacheTask(_clearCacheCancellationTokenSource.Token);
+            if (!(cacheProvider is DummyCacheProvider))
+                _clearCacheTask(_clearCacheCancellationTokenSource.Token);
         }
 
         public async Task<IEnumerable<GeoPoint>> GetPoints(string address, CancellationToken cToken)
