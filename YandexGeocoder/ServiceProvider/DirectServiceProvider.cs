@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Net.Http;
+using System.Runtime.CompilerServices;
 using System.Threading;
 using System.Threading.Tasks;
 using IRTech.YandexGeocoder;
@@ -101,6 +102,7 @@ namespace YandexGeocoder.ServiceProvider
             return fromCache.Concat(filled);
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         private async Task<JObject> _getResponseJObject(string address)
         {
             var jsonStringTask = _client.GetStringAsync(BaseUrl + address);
@@ -112,15 +114,11 @@ namespace YandexGeocoder.ServiceProvider
             return JObject.Parse(await jsonStringTask.ConfigureAwait(false));
         }
 
-        private static JToken _parseJObjectCommon(JObject jObject)
-        {
-            return jObject["response"]["GeoObjectCollection"]["featureMember"];
-        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static JToken _parseJObjectCommon(JObject jObject) => jObject["response"]["GeoObjectCollection"]["featureMember"];
 
-        private static string _parsePos(JToken featureMember)
-        {
-            return (string)featureMember["GeoObject"]["Point"]["pos"];
-        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        private static string _parsePos(JToken featureMember) => (string)featureMember["GeoObject"]["Point"]["pos"];
 
         private void _clearCacheTask(CancellationToken cToken)
         {
@@ -154,6 +152,7 @@ namespace YandexGeocoder.ServiceProvider
                 {
                     _clearCacheCancellationTokenSource.Cancel();
                     _client.Dispose();
+                    _cacheLock.Dispose();
                 }
                 disposedValue = true;
             }
