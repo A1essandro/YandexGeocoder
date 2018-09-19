@@ -1,11 +1,16 @@
 using System.Globalization;
+using System.Runtime.Serialization;
+using Newtonsoft.Json;
 
 namespace IRTech.YandexGeocoder
 {
+
+    [DataContract]
     public class GeoPoint
     {
 
-        internal GeoPoint(double latitude, double longitude)
+        [JsonConstructor]
+        public GeoPoint(double latitude, double longitude)
         {
             Latitude = latitude;
             Longitude = longitude;
@@ -18,7 +23,10 @@ namespace IRTech.YandexGeocoder
             Longitude = double.Parse(arr[0], CultureInfo.InvariantCulture);
         }
 
+        [DataMember]
         public double Latitude { get; }
+
+        [DataMember]
         public double Longitude { get; }
 
     }
