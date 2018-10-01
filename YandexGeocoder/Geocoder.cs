@@ -32,23 +32,21 @@ namespace IRTech.YandexGeocoder
         public async Task<GeoPoint> GetPoint(string address, CancellationToken cToken = default(CancellationToken))
         {
             var collection = await GetPoints(address, cToken).ConfigureAwait(false);
-            if (collection.Count() == 0)
-            {
-                return null;
-            }
 
-            return collection.First();
+            return collection.FirstOrDefault();
         }
 
         public async Task<IDictionary<string, GeoPoint>> GetPointByAddresses(IEnumerable<string> addresses, CancellationToken cToken = default(CancellationToken))
         {
             var rawResult = await _directService.GetPointsByAddressList(addresses.Distinct(), cToken).ConfigureAwait(false);
-            return rawResult.ToDictionary(x => x.Key, x => x.Value.First());
+            
+            return rawResult.ToDictionary(x => x.Key, x => x.Value.FirstOrDefault());
         }
 
         public async Task<IDictionary<string, IEnumerable<GeoPoint>>> GetPointsByAddresses(IEnumerable<string> addresses, CancellationToken cToken = default(CancellationToken))
         {
             var rawResult = await _directService.GetPointsByAddressList(addresses.Distinct(), cToken).ConfigureAwait(false);
+            
             return rawResult.ToDictionary(x => x.Key, x => x.Value);
         }
 
