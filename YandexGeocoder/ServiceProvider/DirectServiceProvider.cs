@@ -14,7 +14,7 @@ namespace YandexGeocoder.ServiceProvider
     internal class DirectServiceProvider : IDisposable
     {
 
-        private static readonly string BaseUrl = "http://geocode-maps.yandex.ru/1.x/?format=json&geocode=";
+        private static readonly string BaseUrl = "https://geocode-maps.yandex.ru/1.x/?format=json&geocode=";
 
         private readonly HttpClient _client = new HttpClient();
         private readonly FailureStrategy _failureStrategy;
