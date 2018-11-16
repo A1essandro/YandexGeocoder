@@ -24,10 +24,20 @@ namespace IRTech.YandexGeocoder
             _directService = new DirectServiceProvider(_cacheProvider, failureStrategy);
         }
 
-        public async Task<IEnumerable<GeoPoint>> GetPoints(string address, CancellationToken cToken = default(CancellationToken))
-        {
-            return await _directService.GetPoints(address, cToken).ConfigureAwait(false);
-        }
+        /// <summary>
+        /// Checks for correct connection with the service
+        /// </summary>
+        /// <returns></returns>
+        public Task<bool> CheckConnection() => _directService.CheckConnection();
+
+        /// <summary>
+        /// Checks for correct connection with the service
+        /// </summary>
+        /// <param name="timeout"></param>
+        /// <returns></returns>
+        public Task<bool> CheckConnection(int timeout) => _directService.CheckConnection(timeout);
+
+        public Task<IEnumerable<GeoPoint>> GetPoints(string address, CancellationToken cToken = default(CancellationToken)) => _directService.GetPoints(address, cToken);
 
         public async Task<GeoPoint> GetPoint(string address, CancellationToken cToken = default(CancellationToken))
         {
@@ -39,14 +49,14 @@ namespace IRTech.YandexGeocoder
         public async Task<IDictionary<string, GeoPoint>> GetPointByAddresses(IEnumerable<string> addresses, CancellationToken cToken = default(CancellationToken))
         {
             var rawResult = await _directService.GetPointsByAddressList(addresses.Distinct(), cToken).ConfigureAwait(false);
-            
+
             return rawResult.ToDictionary(x => x.Key, x => x.Value.FirstOrDefault());
         }
 
         public async Task<IDictionary<string, IEnumerable<GeoPoint>>> GetPointsByAddresses(IEnumerable<string> addresses, CancellationToken cToken = default(CancellationToken))
         {
             var rawResult = await _directService.GetPointsByAddressList(addresses.Distinct(), cToken).ConfigureAwait(false);
-            
+
             return rawResult.ToDictionary(x => x.Key, x => x.Value);
         }
 

@@ -64,5 +64,16 @@ namespace YandexGeocoder.Test
             await Assert.ThrowsAnyAsync<Exception>(async () => await geocoderException.GetPoints(fakeAddress));
         }
 
+
+        [Fact]
+        public async Task CheckConnectionTest()
+        {
+            var geocoder = new Geocoder();
+
+            Assert.False(await geocoder.CheckConnection(1));
+            Assert.True(await geocoder.CheckConnection());
+            Assert.True(await geocoder.CheckConnection(10000));
+        }
+
     }
 }
