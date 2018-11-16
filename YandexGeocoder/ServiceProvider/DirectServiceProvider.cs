@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Net;
 using System.Net.Http;
 using System.Runtime.CompilerServices;
 using System.Threading;
@@ -32,6 +33,40 @@ namespace YandexGeocoder.ServiceProvider
             _cacheProvider = cacheProvider;
             if (!(cacheProvider is DummyCacheProvider))
                 _clearCacheTask(_clearCacheCancellationTokenSource.Token);
+        }
+
+
+        /// <summary>
+        /// Checks for correct connection with the service
+        /// </summary>
+        /// <param name="timeout"></param>
+        /// <returns></returns>
+        public async Task<bool> CheckConnection(int timeout)
+        {
+            var cts = new CancellationTokenSource();
+
+            try
+            {
+                cts.CancelAfter(timeout);
+
+                var resp = await _client.GetAsync(BaseUrl, cts.Token).ConfigureAwait(false);
+                return resp.StatusCode == HttpStatusCode.OK;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Checks for correct connection with the service
+        /// </summary>
+        /// <returns></returns>
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public async Task<bool> CheckConnection()
+        {
+            var resp = await _client.GetAsync(BaseUrl).ConfigureAwait(false);
+            return resp.StatusCode == HttpStatusCode.OK;
         }
 
         public async Task<IEnumerable<GeoPoint>> GetPoints(string address, CancellationToken cToken)
