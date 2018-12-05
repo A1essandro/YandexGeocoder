@@ -122,7 +122,11 @@ namespace YandexGeocoder.ServiceProvider
         public async Task<IEnumerable<KeyValuePair<string, IEnumerable<GeoPoint>>>> GetPointsByAddressList(IEnumerable<string> addresses, CancellationToken cToken)
         {
             var emptyValues = addresses.Where(x => !_cacheProvider.ContainsAddress(x));
-            var fromCacheTask = Task.Run(() => _cacheProvider.Get(addresses.Where(x => _cacheProvider.ContainsAddress(x))));
+            var inCacheAddresses = addresses.Where(x => _cacheProvider.ContainsAddress(x));
+
+            Task<IEnumerable<KeyValuePair<string, IEnumerable<GeoPoint>>>> fromCacheTask = null;
+            if (inCacheAddresses.Count() > 0)
+                fromCacheTask = Task.Run(() => _cacheProvider.Get(inCacheAddresses));
 
             var fillTasks = emptyValues
                 .Select(async x => new KeyValuePair<string, IEnumerable<GeoPoint>>(x, await GetPoints(x, cToken).ConfigureAwait(false)));
@@ -133,8 +137,13 @@ namespace YandexGeocoder.ServiceProvider
             var filled = fillTasks.Select(x => x.Result);
             _cacheProvider.Set(filled);
 
-            var fromCache = await fromCacheTask.ConfigureAwait(false);
-            return fromCache.Concat(filled);
+            if (fromCacheTask != null)
+            {
+                var fromCache = await fromCacheTask.ConfigureAwait(false);
+                return fromCache.Concat(filled);
+            }
+
+            return filled;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]

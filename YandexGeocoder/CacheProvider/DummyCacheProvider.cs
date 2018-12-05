@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace IRTech.YandexGeocoder.CacheProvider
 {
-    internal class DummyCacheProvider : ICacheProvider
+    internal sealed class DummyCacheProvider : ICacheProvider
     {
 
         private static readonly string InvalidOperationMessage = "This method should never be called";
