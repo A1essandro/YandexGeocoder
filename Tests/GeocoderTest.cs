@@ -32,6 +32,19 @@ namespace YandexGeocoder.Test
         }
 
         [Fact]
+        public async Task PointsByAddressesTest()
+        {
+            var progressValue = 0;
+            var progress = new Progress<int>(x => progressValue = x);
+            var geocoder = new Geocoder();
+            var points = await geocoder.GetPointsByAddresses(new[] { "Якутск", "Токио" }, progress: progress);
+
+            Assert.Equal(2, points.Count());
+            Assert.Equal(2, progressValue);
+            Assert.True(points.Keys.Contains("Якутск"));
+        }
+
+        [Fact]
         public async Task RequestCountTest()
         {
             var geocoder = new Geocoder();

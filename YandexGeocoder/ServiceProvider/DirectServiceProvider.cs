@@ -119,31 +119,48 @@ namespace YandexGeocoder.ServiceProvider
             }
         }
 
-        public async Task<IEnumerable<KeyValuePair<string, IEnumerable<GeoPoint>>>> GetPointsByAddressList(IEnumerable<string> addresses, CancellationToken cToken)
+        public async Task<IEnumerable<KeyValuePair<string, IEnumerable<GeoPoint>>>> GetPointsByAddressList(IEnumerable<string> addresses, CancellationToken cToken, IProgress<int> progress)
         {
+            var progressValue = 0;
             var emptyValues = addresses.Where(x => !_cacheProvider.ContainsAddress(x));
             var inCacheAddresses = addresses.Where(x => _cacheProvider.ContainsAddress(x));
 
             Task<IEnumerable<KeyValuePair<string, IEnumerable<GeoPoint>>>> fromCacheTask = null;
             if (inCacheAddresses.Count() > 0)
-                fromCacheTask = Task.Run(() => _cacheProvider.Get(inCacheAddresses));
-
-            var fillTasks = emptyValues
-                .Select(async x => new KeyValuePair<string, IEnumerable<GeoPoint>>(x, await GetPoints(x, cToken).ConfigureAwait(false)));
-
-            await Task.WhenAll(fillTasks).ConfigureAwait(false);
-
-            cToken.ThrowIfCancellationRequested();
-            var filled = fillTasks.Select(x => x.Result);
-            _cacheProvider.Set(filled);
-
-            if (fromCacheTask != null)
             {
-                var fromCache = await fromCacheTask.ConfigureAwait(false);
-                return fromCache.Concat(filled);
+                progressValue = inCacheAddresses.Count();
+                progress?.Report(progressValue);
+                fromCacheTask = Task.Run(() => _cacheProvider.Get(inCacheAddresses));
             }
 
-            return filled;
+            var progressLock = new object();
+            var fillTasks = emptyValues
+                .Select(async x =>
+                {
+                    cToken.ThrowIfCancellationRequested();
+                    var points = await GetPoints(x, cToken).ConfigureAwait(false);
+
+                    if (progress != null)
+                    {
+                        lock (progressLock)
+                        {
+                            progress?.Report(++progressValue);
+                        }
+                    }
+
+                    return new KeyValuePair<string, IEnumerable<GeoPoint>>(x, points);
+                });
+
+            var filled = await Task.WhenAll(fillTasks).ConfigureAwait(false);
+            _cacheProvider.Set(filled);
+            if (fromCacheTask == null)
+            {
+                return filled;
+            }
+
+            cToken.ThrowIfCancellationRequested();
+            var fromCache = await fromCacheTask.ConfigureAwait(false);
+            return fromCache.Concat(filled);
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
