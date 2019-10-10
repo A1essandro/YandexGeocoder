@@ -65,8 +65,15 @@ namespace YandexGeocoder.ServiceProvider
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public async Task<bool> CheckConnection()
         {
-            var resp = await _client.GetAsync(BaseUrl).ConfigureAwait(false);
-            return resp.StatusCode == HttpStatusCode.OK;
+            try
+            {
+                var resp = await _client.GetAsync(BaseUrl).ConfigureAwait(false);
+                return resp.StatusCode == HttpStatusCode.OK;
+            }
+            catch //For example, exception on transport level
+            {
+                return false;
+            }
         }
 
         public async Task<IEnumerable<GeoPoint>> GetPoints(string address, CancellationToken cToken)
