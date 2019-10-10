@@ -93,9 +93,9 @@ namespace YandexGeocoder.ServiceProvider
                 }
 
                 cToken.ThrowIfCancellationRequested();
-                var jsonObject = await _getResponseJObject(address).ConfigureAwait(false);
                 try
                 {
+                    var jsonObject = await _getResponseJObject(address).ConfigureAwait(false);
                     var rawPoints = _parseJObjectCommon(jsonObject);
                     if (_failureStrategy == FailureStrategy.ThrowException && rawPoints.Count() == 0)
                     {
